@@ -1,0 +1,148 @@
+#include <IRremote.h>
+#include<Servo.h>
+int step=0;
+Servo servo_1;
+int pos1=90;
+Servo servo_2;
+int pos2=90;
+//Defining Servos and their original positions
+
+int echoPin1=2;
+int trigPin1=3;
+int echoPin2=A4;
+int trigPin2=A5;
+ //Two Ultrasonic Sensors for detection
+  
+int ir_1=7;
+int ir_2=6;
+int ir_3=5;
+int ir_4=4;
+
+IRrecv irrecv(ir_1);
+decode_results results;
+//Menu Icons
+
+int led_r=13;//for ir_1
+int led_b=12;//for ir_2
+int led_g=9;//for ir_3
+int led_y=8;//for ir_4
+//Menu Items
+
+long duration1,distance1;
+long duration2,distance2;
+
+void setup() {
+irrecv.enableIRIn();
+  
+  pinMode(trigPin1,OUTPUT);
+  pinMode(echoPin1, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);// Ultrasonic Sensors
+  pinMode(led_r, OUTPUT);
+  pinMode(led_b, OUTPUT);
+  pinMode(led_g, OUTPUT);
+  pinMode(led_y, OUTPUT);//Menu Items
+  pinMode(ir_1, INPUT);
+  pinMode(ir_2, INPUT);
+  pinMode(ir_3, INPUT);
+  pinMode(ir_4, INPUT);//Menu Icons
+  servo_1.attach(11);
+  servo_2.attach(10);//Barricades
+  
+  Serial.begin (9600);
+}
+void loop() {
+  //Waiting till servos attain closed position
+  digitalWrite(trigPin1,LOW);
+  delayMicroseconds(100);
+  digitalWrite(trigPin1,HIGH);
+  delayMicroseconds(100);
+  digitalWrite(trigPin1,LOW);
+   duration1=pulseIn(echoPin1,HIGH);
+  distance1=0.034/2*duration1;
+  Serial.println(distance1);
+  if(distance1<=160)
+  {
+    for(pos1=90; pos1>=0;pos1--)
+    {
+      servo_1.write(pos1);
+      delay(15);
+    }
+    Serial.println("Welcome to McDonalds");
+    delay(6000);
+    for(pos1=0;pos1<=90;pos1++)
+    {
+      servo_1.write(pos1);
+      delay(15);
+    }
+    step=1;
+    delay(3000);
+  }
+  
+ //Entry when Sensor detects car
+  
+  if(step==1){
+   if(irrecv.decode(&results)){       
+    switch(results.value){
+    case 0xFD08F7: //'1' on remote
+      Serial.println("Menu 1 Selected");
+      digitalWrite(led_r, HIGH);
+      delay(2000);
+      digitalWrite(led_r,LOW);
+      break;
+      case 0xFD8877: //'2' on remote
+      Serial.println("Menu 2 Selected");
+      digitalWrite(led_b, HIGH);
+      delay(2000);
+      digitalWrite(led_b,LOW);
+      break;
+      case 0xFD48B7: //'3' on remote
+      Serial.println("Menu 3 Selected");
+      digitalWrite(led_g, HIGH);
+      delay(2000);
+      digitalWrite(led_g,LOW);
+      break;
+      case 0xFD28D7: //'4' on remote
+      Serial.println("Menu 4 Selected");
+      digitalWrite(led_y, HIGH);
+      delay(2000);
+      digitalWrite(led_y,LOW);
+      break;
+    }
+    irrecv.resume();
+  
+  }
+    
+    delay(6000);
+    step=2;
+  }
+  /* For Menu Selection ,Press 1 for Menu-1,Press 2 for Menu-2
+ Press 3 for Menu-3, Press 4 for Menu-4 on IR Remote*/  
+  
+  if(step==2){
+      digitalWrite(trigPin2,LOW);
+      delayMicroseconds(100);
+      digitalWrite(trigPin2,HIGH);
+      delayMicroseconds(100);
+      digitalWrite(trigPin2,LOW);
+      duration2=pulseIn(echoPin2,HIGH);
+      distance2=0.034/2*duration2;
+        Serial.println(distance2);
+      if(distance2<=160)
+      {
+        for(pos2=90; pos2>=0;pos2--)
+        {
+          servo_2.write(pos2); 
+          delay(15);
+        }
+        Serial.println("Thank You");
+        delay(5000);
+        for(pos2=0;pos2<=90;pos2++)
+        {
+          servo_2.write(pos2);
+          delay(15);
+        }
+      }
+    }
+  //Depature when car comes in sensor range
+}
